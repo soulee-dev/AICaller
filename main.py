@@ -3,7 +3,7 @@ import json
 import base64
 import asyncio
 import websockets
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, Query
 from fastapi.websockets import WebSocketDisconnect
 from twilio.twiml.voice_response import VoiceResponse, Connect
 from dotenv import load_dotenv
@@ -41,11 +41,15 @@ async def root():
 
 
 @app.get("/create-call")
-async def create_call(to: str, from_: str):
+async def create_call(
+    to: str = Query(..., description="Phone number to make a call"),
+    from_: str = Query(..., description="Phone number you purchased from Twilio"),
+    stream_url: str = Query(..., description="URL to stream audio to the call"),
+):
     """Creates a call and streams audio to the OpenAI Realtime API."""
     response = VoiceResponse()
     connect = Connect()
-    connect.stream(url=f"wss://8566-182-219-61-252.ngrok-free.app/media-stream")
+    connect.stream(url=stream_url)
     response.append(connect)
 
     call = client.calls.create(
@@ -144,4 +148,4 @@ async def send_to_twilio(websocket: WebSocket, openai_ws):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0")
